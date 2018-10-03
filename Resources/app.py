@@ -5,13 +5,15 @@ from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func
 from flask import Flask, jsonify
-
+import datetime as dt
+from datetime import date
 
 # Database Setup
 engine = create_engine("sqlite:///hawaii.sqlite")
 
 # reflect an existing database into a new model
 Base = automap_base()
+
 # reflect the tables
 Base.prepare(engine, reflect=True)
 
@@ -70,27 +72,27 @@ def tobs():
     return jsonify(temp)
 
 @app.route("/api/v1.0/<start>")
-def start():
+def since():
     #Return a JSON list of the minimum temperature, the average temperature, and the max temperature for a given start or start-end range.
-#When given the start only, calculate TMIN, TAVG, and TMAX for all dates greater than and equal to the start date.
-#When given the start and the end date, calculate the TMIN, TAVG, and TMAX for dates between the start and end date inclusive.
-    temps = session.query(Measurement.date, Measurement.tobs).\
-        filter(Measurement.date.between('2016-01-01' , '2017-01-01')).all()
+    #When given the start only, calculate TMIN, TAVG, and TMAX for all dates greater than and equal to the start date.
+    start_date = dt.datetime.strptime(start, '%Y-%m-%d')
 
-    temp = dict(temps)
+    summary_since_start = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+        filter(Measurement.date >= start_date).all()
 
-    return jsonify(temp)
+    return jsonify(summary_since_start)
 
 @app.route("/api/v1.0/<start>/<end>")
-def startend():
-    #Return a JSON list of Temperature Observations (tobs) for the previous year.
-    temps = session.query(Measurement.date, Measurement.tobs).\
-        filter(Measurement.date.between('2016-01-01' , '2017-01-01')).all()
+def between():
+    #When given the start and the end date, calculate the TMIN, TAVG, and TMAX for dates between the start and end date inclusive.
+    start_date = dt.datetime.strptime(start, '%Y-%m-%d')
 
-    temp = dict(temps)
+    end_date = dt.datetime.strptime(end, '%Y-%m-%d')
 
-    return jsonify(temp)
+    summary_start_end = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+        filter(Measurement.date.between (start_date, end_date)).all()
 
+    return jsonify(summary_start_end)
 
 if __name__ == '__main__':
     app.run(debug=True)
