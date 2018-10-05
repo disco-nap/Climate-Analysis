@@ -77,8 +77,10 @@ def since():
     #When given the start only, calculate TMIN, TAVG, and TMAX for all dates greater than and equal to the start date.
     start_date = dt.datetime.strptime(start, '%Y-%m-%d')
 
+    last_date = dt.datetime.strptime('2017-08-23', '%Y-%m-%d')
+
     summary_since_start = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
-        filter(Measurement.date >= start_date).all()
+        filter(Measurement.date.between(start_date, last_date)).all()
 
     return jsonify(summary_since_start)
 
